@@ -18,17 +18,14 @@
 
 char keys[ROWS][COLS];
 
-byte colPins[COLS] = {17, 16, 15, 14, 13};
-byte rowPins[ROWS] = {9, 10, 11, 12};
-
 struct EncoderStruct
 {
-  // Counter Clockwise Key
-  short ccwKey;
-  // Clockwise Key
-  short cwKey;
-  // Encoder
-  Encoder encoder;
+    // Counter Clockwise Key
+    short ccwKey;
+    // Clockwise Key
+    short cwKey;
+    // Encoder
+    Encoder encoder;
 };
 
 EncoderStruct encoders[ENCODER_NUM] = {
@@ -36,6 +33,14 @@ EncoderStruct encoders[ENCODER_NUM] = {
     {22, 23, Encoder(1, 5)},
     {24, 25, Encoder(2, 6)},
     {26, 27, Encoder(3, 8)}};
+
+byte colPins[COLS] = {17, 16, 15, 14, 13};
+
+// Left
+byte rowPins[ROWS] = {9, 10, 11, 12};
+
+// Right
+// byte rowPins[ROWS] = {12, 11, 10, 9};
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
@@ -61,104 +66,104 @@ Joystick_ joystick(
 // Update encoder on interrupt
 void updateEncoders()
 {
-  for (short i = 0; i < ENCODER_NUM; i++)
-  {
-    encoders[i].encoder.update();
-  }
+    for (short i = 0; i < ENCODER_NUM; i++)
+    {
+        encoders[i].encoder.update();
+    }
 }
 
 void setup()
 {
-  // Serial.begin(115200);
+    // Serial.begin(115200);
 
-  byte keyValue = 0;
+    byte keyValue = 0;
 
-  for (short i = 0; i < ROWS; i++)
-  {
-    for (short j = 0; j < COLS; j++)
+    for (short i = 0; i < ROWS; i++)
     {
-      keys[i][j] = keyValue++;
+        for (short j = 0; j < COLS; j++)
+        {
+            keys[i][j] = keyValue++;
+        }
     }
-  }
 
-  for (short i = 0; i < ENCODER_NUM; i++)
-  {
-    encoders[i].encoder.begin();
-    attachInterrupt(
-        digitalPinToInterrupt(encoders[i].encoder.getIntPin()),
-        updateEncoders,
-        CHANGE);
-  }
+    for (short i = 0; i < ENCODER_NUM; i++)
+    {
+        encoders[i].encoder.begin();
+        attachInterrupt(
+            digitalPinToInterrupt(encoders[i].encoder.getIntPin()),
+            updateEncoders,
+            CHANGE);
+    }
 
-  joystick.begin();
+    joystick.begin();
 }
 
 // Rotary Encoders Input
 void encoderLoop()
 {
-  for (short i = 0; i < ENCODER_NUM; i++)
-  {
-    int encValue = encoders[i].encoder.getValue();
-
-    // if (encValue != 0)
-    // {
-    //   Serial.print("Encoder ");
-    //   Serial.print(i);
-    //   Serial.print(" -> ");
-    //   Serial.print("Value: ");
-    //   Serial.println(encValue);
-    // }
-
-    switch (encValue)
+    for (short i = 0; i < ENCODER_NUM; i++)
     {
-    case -1:
-      joystick.pressButton(encoders[i].ccwKey);
-      delay(ENCODER_DELAY);
-      break;
-    case 0:
-      joystick.releaseButton(encoders[i].ccwKey);
-      joystick.releaseButton(encoders[i].cwKey);
-      break;
-    case 1:
-      joystick.pressButton(encoders[i].cwKey);
-      delay(ENCODER_DELAY);
-      break;
+        int encValue = encoders[i].encoder.getValue();
+
+        // if (encValue != 0)
+        // {
+        //   Serial.print("Encoder ");
+        //   Serial.print(i);
+        //   Serial.print(" -> ");
+        //   Serial.print("Value: ");
+        //   Serial.println(encValue);
+        // }
+
+        switch (encValue)
+        {
+        case -1:
+            joystick.pressButton(encoders[i].ccwKey);
+            delay(ENCODER_DELAY);
+            break;
+        case 0:
+            joystick.releaseButton(encoders[i].ccwKey);
+            joystick.releaseButton(encoders[i].cwKey);
+            break;
+        case 1:
+            joystick.pressButton(encoders[i].cwKey);
+            delay(ENCODER_DELAY);
+            break;
+        }
     }
-  }
 }
 
 // Buttons input
 void buttonLoop()
 {
-  if (keypad.getKeys())
-  {
-    for (int i = 0; i < LIST_MAX; i++)
+    if (keypad.getKeys())
     {
-      Key k = keypad.key[i];
-      if (k.stateChanged)
-      {
-        switch (k.kstate)
+        for (int i = 0; i < LIST_MAX; i++)
         {
-        case PRESSED:
-          joystick.pressButton(k.kchar);
-          break;
-        case HOLD:
-          joystick.setButton(k.kchar, 1);
-          break;
-        case RELEASED:
-          joystick.releaseButton(k.kchar);
-          break;
-        case IDLE:
-          joystick.setButton(k.kchar, 0);
-          break;
+            Key k = keypad.key[i];
+            if (k.stateChanged)
+            {
+                switch (k.kstate)
+                {
+                case PRESSED:
+                    joystick.pressButton(k.kchar);
+                    break;
+                case HOLD:
+                    joystick.setButton(k.kchar, 1);
+                    break;
+                case RELEASED:
+                    joystick.releaseButton(k.kchar);
+                    break;
+                case IDLE:
+                    joystick.setButton(k.kchar, 0);
+                    break;
+                }
+            }
         }
-      }
     }
-  }
 }
 
 void loop()
 {
-  encoderLoop();
-  buttonLoop();
+    encoderLoop();
+    buttonLoop();
 }
